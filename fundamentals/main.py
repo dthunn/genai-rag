@@ -167,4 +167,94 @@ sorted_results = sorted(enumerate(results), key=lambda x: x[1][0], reverse=True)
 
 # Iterate over the sorted results and print the document with scores
 for idx, score in sorted_results:
-  print(f"Score {score[0]} Document {documents[idx]}") # Use idx (integer) to access document
+  print(f"Score {score[0]:.2f} Document {documents[idx]}") # Use idx (integer) to access document
+
+
+# Boolean Retrieval --------------------------------------------------------------
+
+
+# Process the text: tokenization, only alphanumeric, lower case, no stopwords except logical operators
+def process_text(text):
+    # Convert text to lower case
+    processed_text = text.lower()
+
+    # Tokenize the text
+    processed_text = nltk.word_tokenize(processed_text)
+
+    # Filter out non-alphanumeric tokens
+    processed_text = [word for word in processed_text if word.isalnum()]
+
+    # Define stopwords while excluding logical operators
+    stopwords = set(nltk.corpus.stopwords.words("english")) - {"and", "or", "not"}
+
+    # Filter out stopwords except logical operators
+    processed_text = [word for word in processed_text if word not in stopwords]
+
+    return processed_text
+
+
+def boolean_search(query, documents):
+    query_tokens = process_text(query)  # Process the query
+    print("Query Tokens:", query_tokens)
+
+    results = []  # Store matching documents
+
+    # Iterate through each document
+    for doc_id, doc in enumerate(documents):
+        doc_tokens = set(process_text(doc))  # Convert doc into a set of words
+
+        include_doc = None  # Start as `None` to correctly handle first token
+
+        i = 0
+        while i < len(query_tokens):
+            token = query_tokens[i]
+
+            if token == "not" and i + 1 < len(query_tokens):
+                next_token = query_tokens[i + 1]
+                if next_token in doc_tokens:
+                    include_doc = False  # Exclude document if `next_token` is found
+                    break  # Stop processing this document
+                i += 1  # Skip next token since we already processed it
+
+            elif token == "and" and i + 1 < len(query_tokens):
+                next_token = query_tokens[i + 1]
+                if include_doc is not None:
+                    include_doc = include_doc and (next_token in doc_tokens)
+                else:
+                    include_doc = next_token in doc_tokens  # Initialize for first condition
+                i += 1  # Skip next token since we already processed it
+
+            elif token == "or" and i + 1 < len(query_tokens):
+                next_token = query_tokens[i + 1]
+                if include_doc is not None:
+                    include_doc = include_doc or (next_token in doc_tokens)
+                else:
+                    include_doc = next_token in doc_tokens  # Initialize for first condition
+                i += 1  # Skip next token since we already processed it
+
+            else:
+                if include_doc is None:
+                    include_doc = token in doc_tokens  # Initialize first condition
+                else:
+                    include_doc = include_doc or (token in doc_tokens)  # Apply "OR" logic by default
+
+            i += 1  # Move to the next token
+
+        if include_doc:
+            results.append((doc_id, doc))  # Add document if it matches
+
+    return results
+
+
+# Define the search query
+query = "sailing not croatia"
+
+# Perform a boolean search on the documents using the query
+boolean_results = boolean_search(query, documents)
+
+# Print the results of the boolean search
+print("Boolean Search Results for query '{}':".format(query))
+
+# Iterate through the search results and print the document ID and content
+for doc_id, doc in boolean_results:
+    print("Document ID: {}, Document: {}".format(doc_id, doc))
