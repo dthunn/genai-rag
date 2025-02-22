@@ -7,8 +7,10 @@ name = "pypi"
 openai = "*"
 nltk = "*"
 scikit-learn = "*"
-numpy = "*"
+numpy = "==1.26.4"
 rank-bm25 = "*"
+transformers = "*"
+torch = "*"
 
 [dev-packages]
 
