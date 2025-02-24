@@ -68,3 +68,9 @@ print(tokenized_data[:2])
 inputs_ids = [item['input_ids'].squeeze() for item in tokenized_data]
 attention_masks = [item['attention_mask'].squeeze() for item in tokenized_data]
 print(attention_masks[:2])
+
+
+# Convert the input IDs and attention masks to tensors
+# This step is necessary for processing the tuned model
+inputs_ids = torch.stack(inputs_ids)
+attention_masks = torch.stack(attention_masks)
